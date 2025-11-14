@@ -1,0 +1,5 @@
+This is a file describing standard input and output formats.
+1. Standard Event Table Input Format
+
+frame	y_det	x_det	contrasts_det	contrasts	x_fit	y_fit	contrasts_se	r2_fit	res_fit	x	y	masses_kDa
+File extensions available: csv, parquet
