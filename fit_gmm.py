@@ -3,7 +3,7 @@ import numpy as np
 
 from typing import Optional
 def fit_gmm(contrasts: np.ndarray, metaparams: list, guesses: dict):
-            
+    """This function fits a GMM to Event Table's contrasts and returns a dictionary with parameters and metrics of fit back"""        
     gradient=metaparams[0]
     intercept = metaparams[1]
     guess_mean_masses = np.array(guesses['mean'])
