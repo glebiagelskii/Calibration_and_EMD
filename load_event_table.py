@@ -21,16 +21,15 @@ def load_event_table(path_to_file: str) -> pd.DataFrame:
 
 
 
-event_table = load_event_table('stuff.csv')
+
 
 
 
 def table_header_format_is_correct(df: pd.DataFrame) -> bool:
-    columns = set(df.columns)
-    standard_columns = set(pd.read_csv('standard_event_table_format.csv').columns)
+    columns = set(df.columns.str.replace(r'[\t\n\r\u200B\uFEFF]', '', regex=True))
+    standard_columns = set(pd.read_csv('standard_event_table_format.csv').columns.str.replace(r'[\t\n\r\u200B\uFEFF]', '', regex=True))
     if columns == standard_columns:
         return True
     else:
         print(f'Non-standard header format. \n The culprit columns are {columns - standard_columns}')
         return False
-table_header_format_is_correct(event_table)
