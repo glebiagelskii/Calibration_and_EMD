@@ -19,21 +19,26 @@ def fit_gmm(contrasts: np.ndarray, metaparams: list, guesses: dict):
 
     #Clip the contrast window to [0, 6 * expected monomer contrast]
     print(f'min contrast {min(contrasts)} max contrast {max(contrasts)} number of samples {contrasts.shape[0]}')
-    contrasts = contrasts[(contrasts > 0) & (contrasts < (6 * guess_mean_contrasts[0]))]
+    contrasts = contrasts[(contrasts > 0) & (contrasts < (0.015))]
     contrasts = contrasts.reshape(-1, 1)
     print(f'min contrast {min(contrasts)} max contrast {max(contrasts)} number of samples {contrasts.shape[0]}')
 
     gmm = GaussianMixture(n_components=3,
                           covariance_type='full',
-                          tol=1e-12,
-                          max_iter = 5000,
+                          tol=1e-15,
+                          max_iter = 50000,
                           means_init=guess_mean_contrasts.reshape(-1,1),
                           precisions_init=guess_precisions_contrasts.reshape(-1,1,1),
-                          n_init=1
+                          n_init=1,
+                          verbose=2,
+                          verbose_interval=10
                         )                      
     gmm.fit(contrasts)
     
+
     return {'means_in_contrast':[gmm.means_.ravel()],'sigmas_in_contrast' : [gmm.covariances_.ravel()], 'weights' :[gmm.weights_.ravel()],'metrics':{'score':gmm.score(contrasts), 'aic':gmm.aic(contrasts), 'bic': gmm.bic(contrasts), 'scores_per_sample':gmm.score_samples(contrasts)}}
+
+
 
 
 
