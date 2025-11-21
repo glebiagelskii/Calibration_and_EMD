@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        python -m pip install .[dev]
+        python -m pip install .[dependencies]
         python -m pip install flake8 black
     - name: reformat with black
       run: |
