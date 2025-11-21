@@ -1,3 +1,3 @@
 import cmdstanpy
-cmdstanpy.install_cmdstan()
 
+cmdstanpy.install_cmdstan()

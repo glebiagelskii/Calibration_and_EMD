@@ -1,6 +1,5 @@
 """This is a script that defines the core Event Table class"""
 
-
 from load_event_table import *
 from scipy.stats import wasserstein_distance
 import numpy as np
@@ -11,11 +10,43 @@ from sklearn.linear_model import LinearRegression
 import cmdstanpy
 from fit_gmm import fit_gmm
 from scipy.stats import norm
-cmdstanpy.set_cmdstan_path('/Users/glebiagelskii/.cmdstan/cmdstan-2.37.0')
-class Event_Table():
-    meta_calibration_parameters = {'Refeyn OneMP':{'Medium':[3.34E-5, 0 ], 'Full':[2.8E-5, 0 ], 'Small':[2.8E-5, 0 ], 'Regular':[2.8E-5, 0 ]}, 'Refeyn TwoMP':{'Medium':[4E-5, 10 ], 'Full':[3.7E-5,10], 'Small':[3.7E-5, 10 ], 'Regular':[3.7E-5, 10 ]}}
-    MS1000_guesses = {'means':[90, 180, 360], 'sigmas':[12, 8, 12]}
-    def __init__(self, frame,	y_det,	x_det,	contrasts_det,	contrasts,	x_fit,	y_fit,	contrasts_se,	r2_fit,	res_fit,x,	y,	masses_kDa, calibration_required, instrument_name, ROI_mode, calibration_results=None, calibrated=0, gradient_kDa_per_contrast=None, intercept_kDa_per_contrast=None, r2=None, calibrated_peaks=None, calibrated_core_sigma=None):
+
+cmdstanpy.set_cmdstan_path("/Users/glebiagelskii/.cmdstan/cmdstan-2.37.0")
+
+
+class Event_Table:
+    meta_calibration_parameters = {
+        "Refeyn OneMP": {"Medium": [3.34e-5, 0], "Full": [2.8e-5, 0], "Small": [2.8e-5, 0], "Regular": [2.8e-5, 0]},
+        "Refeyn TwoMP": {"Medium": [4e-5, 10], "Full": [3.7e-5, 10], "Small": [3.7e-5, 10], "Regular": [3.7e-5, 10]},
+    }
+    MS1000_guesses = {"means": [90, 180, 360], "sigmas": [12, 8, 12]}
+
+    def __init__(
+        self,
+        frame,
+        y_det,
+        x_det,
+        contrasts_det,
+        contrasts,
+        x_fit,
+        y_fit,
+        contrasts_se,
+        r2_fit,
+        res_fit,
+        x,
+        y,
+        masses_kDa,
+        calibration_required,
+        instrument_name,
+        ROI_mode,
+        calibration_results=None,
+        calibrated=0,
+        gradient_kDa_per_contrast=None,
+        intercept_kDa_per_contrast=None,
+        r2=None,
+        calibrated_peaks=None,
+        calibrated_core_sigma=None,
+    ):
         self.frame = frame
         self.y_det = y_det
         self.x_det = x_det
@@ -29,7 +60,7 @@ class Event_Table():
         self.x = x
         self.y = y
         self.masses_kDa = masses_kDa
-        self.fit_required = calibration_required 
+        self.fit_required = calibration_required
         self.instrument_name = instrument_name
         self.ROI_mode = ROI_mode
 
@@ -40,42 +71,40 @@ class Event_Table():
         self.r2 = r2
         self.calibrated_peaks = calibrated_peaks
         self.calibrated_core_sigmas = calibrated_core_sigma
-    
-    
-    @classmethod
 
-    def from_path(cls, file_path: str, ROI: str, Instrument:str, needs_calibration: bool):
+    @classmethod
+    def from_path(cls, file_path: str, ROI: str, Instrument: str, needs_calibration: bool):
 
         df = load_event_table(Path(file_path))
 
         if table_header_format_is_correct(df):
             pass
         else:
-            raise ValueError('Review Header')
-        
-        if Instrument == 'Refeyn OneMP' or Instrument=='Refeyn TwoMP':
+            raise ValueError("Review Header")
+
+        if Instrument == "Refeyn OneMP" or Instrument == "Refeyn TwoMP":
             pass
         else:
-            raise ValueError(f'Intrument name cannot be {Instrument}, only Refeyn OneMP or Refeyn TwoMP')
-        if ROI=='Regular' or ROI=='Full' or ROI=='Small' or ROI=='Medium':
+            raise ValueError(f"Intrument name cannot be {Instrument}, only Refeyn OneMP or Refeyn TwoMP")
+        if ROI == "Regular" or ROI == "Full" or ROI == "Small" or ROI == "Medium":
             pass
         else:
-            raise ValueError(f'ROI name cannot be {ROI}, only Medium, Small, Full or Regular')
-            
+            raise ValueError(f"ROI name cannot be {ROI}, only Medium, Small, Full or Regular")
+
         return cls(
-            frame=df['frame'].values,
-            y_det=df['y'].values,
-            x_det=df['x'].values,
-            contrasts_det=df['contrasts_det'].values if 'contrasts_det' in df else None,
-            contrasts=df['contrasts'].values,
-            x_fit=df['x_fit'].values,
-            y_fit=df['y_fit'].values,
-            contrasts_se=df['contrasts_se'].values,
-            r2_fit=df['r2_fit'].values,
-            res_fit=df['res_fit'].values,
-            x=df['x'].values,
-            y=df['y'].values,
-            masses_kDa=df['masses_kDa'].values if 'masses_kDa' in df else None,
+            frame=df["frame"].values,
+            y_det=df["y"].values,
+            x_det=df["x"].values,
+            contrasts_det=df["contrasts_det"].values if "contrasts_det" in df else None,
+            contrasts=df["contrasts"].values,
+            x_fit=df["x_fit"].values,
+            y_fit=df["y_fit"].values,
+            contrasts_se=df["contrasts_se"].values,
+            r2_fit=df["r2_fit"].values,
+            res_fit=df["res_fit"].values,
+            x=df["x"].values,
+            y=df["y"].values,
+            masses_kDa=df["masses_kDa"].values if "masses_kDa" in df else None,
             calibration_required=needs_calibration,
             instrument_name=Instrument,
             ROI_mode=ROI,
@@ -83,124 +112,163 @@ class Event_Table():
             calibrated=0,
             gradient_kDa_per_contrast=None,
             intercept_kDa_per_contrast=None,
-            r2=None, calibrated_peaks=None,
-            calibrated_core_sigma=None
+            r2=None,
+            calibrated_peaks=None,
+            calibrated_core_sigma=None,
         )
-       
 
-    def calibrate(self, select_by_metric:str, reject_great_residuals:bool=False, r2_PSF_fit: float =0.9):
+    def calibrate(self, select_by_metric: str, reject_great_residuals: bool = False, r2_PSF_fit: float = 0.9):
         best_aic = 1000
         best_bic = 1000
         best_score = 1000
 
-        #Note the current structure is prep work for when potential future iterations will attempt fits with vairable numbers of peak components
+        # Note the current structure is prep work for when potential future iterations will attempt fits with vairable numbers of peak components
 
-        if select_by_metric=='aic':
+        if select_by_metric == "aic":
             metaparams = Event_Table.meta_calibration_parameters[self.instrument_name][self.ROI_mode]
             guesses = Event_Table.MS1000_guesses
-            if reject_great_residuals==False:
+            if reject_great_residuals == False:
                 results = fit_gmm(self.contrasts, metaparams, guesses)
                 print(f"The Aikake information criterion for the GMM fit is {results['metrics']['aic']}")
             else:
-                contrasts = self.contrasts[self.r2_fit>r2_PSF_fit]
+                contrasts = self.contrasts[self.r2_fit > r2_PSF_fit]
                 results = fit_gmm(contrasts, metaparams, guesses)
                 print(f"The Aikake information criterion for the GMM fit is {results['metrics']['aic']}")
-        elif select_by_metric=='bic':
+        elif select_by_metric == "bic":
             metaparams = Event_Table.meta_calibration_parameters[self.instrument_name][self.ROI_mode]
             guesses = Event_Table.MS1000_guesses
             results = fit_gmm(self.contrasts, metaparams, guesses)
-            if reject_great_residuals==False:
+            if reject_great_residuals == False:
                 results = fit_gmm(self.contrasts, metaparams, guesses)
                 print(f"The Bayesian information criterion for the GMM fit is {results['metrics']['bic']}")
             else:
-                contrasts = self.contrasts[self.r2_fit>r2_PSF_fit]
+                contrasts = self.contrasts[self.r2_fit > r2_PSF_fit]
                 results = fit_gmm(contrasts, metaparams, guesses)
                 print(f"The Bayesian information criterion for the GMM fit is {results['metrics']['bic']}")
-        elif select_by_metric=='score':
+        elif select_by_metric == "score":
             metaparams = Event_Table.meta_calibration_parameters[self.instrument_name][self.ROI_mode]
             guesses = Event_Table.MS1000_guesses
             results = fit_gmm(self.contrasts, metaparams, guesses)
-            if reject_great_residuals==False:
+            if reject_great_residuals == False:
                 results = fit_gmm(self.contrasts, metaparams, guesses)
                 print(f"The Log loss for the GMM fit is {results['metrics']['score']}")
             else:
-                contrasts = self.contrasts[self.r2_fit>r2_PSF_fit]
+                contrasts = self.contrasts[self.r2_fit > r2_PSF_fit]
                 results = fit_gmm(contrasts, metaparams, guesses)
                 print(f"The Log loss for the GMM fit is {results['metrics']['score']}")
         else:
-            raise ValueError(f'The selected metric must be either aic, bic or score, not {select_by_metric}')
-        
-        #Linear Regression
+            raise ValueError(f"The selected metric must be either aic, bic or score, not {select_by_metric}")
+
+        # Linear Regression
         model = LinearRegression()
-        contrast_means = np.array(results['means_in_contrast']).reshape(-1,1)
-        model.fit(contrast_means, np.array(Event_Table.MS1000_guesses['means']))
+        contrast_means = np.array(results["means_in_contrast"]).reshape(-1, 1)
+        model.fit(contrast_means, np.array(Event_Table.MS1000_guesses["means"]))
         self.gradient_kDa_per_contrast = model.coef_[0]
         self.intercept_kDa_per_contrast = model.intercept_
-        self.r2 = model.score(contrast_means, np.array(Event_Table.MS1000_guesses['means']) )
+        self.r2 = model.score(contrast_means, np.array(Event_Table.MS1000_guesses["means"]))
         self.calibrated_peaks = model.predict(contrast_means)
-        self.calibrated_core_sigmas = np.array(results['sigmas_in_contrast'])* self.gradient_kDa_per_contrast + self.intercept_kDa_per_contrast
-        #Change the stored values of masses
-        self.masses_kDa = self.contrasts*self.gradient_kDa_per_contrast + self.intercept_kDa_per_contrast
+        self.calibrated_core_sigmas = (
+            np.array(results["sigmas_in_contrast"]) * self.gradient_kDa_per_contrast + self.intercept_kDa_per_contrast
+        )
+        # Change the stored values of masses
+        self.masses_kDa = self.contrasts * self.gradient_kDa_per_contrast + self.intercept_kDa_per_contrast
 
-        #Store the results of the calibration_results to results
+        # Store the results of the calibration_results to results
         self.calibration_results = results
 
-        #Change status to calibrated and print a message
+        # Change status to calibrated and print a message
         self.calibrated = 1
 
-        print(f'Your event table was succesfully calibrated with an $R^{2}$ value of {self.r2} and calibration peak values of {self.calibrated_peaks} and corresponding sigmas of {self.calibrated_core_sigmas}')
-        print(f'Calibration gradient: {self.gradient_kDa_per_contrast} kDa per contrast unit, intercept: {self.intercept_kDa_per_contrast} kDa')
-
-
-
+        print(
+            f"Your event table was succesfully calibrated with an $R^{2}$ value of {self.r2} and calibration peak values of {self.calibrated_peaks} and corresponding sigmas of {self.calibrated_core_sigmas}"
+        )
+        print(
+            f"Calibration gradient: {self.gradient_kDa_per_contrast} kDa per contrast unit, intercept: {self.intercept_kDa_per_contrast} kDa"
+        )
 
     def save_to_csv(self, output_path: str):
-        if self.calibrated !=1:
-            raise ValueError('The event table has not been calibrated yet, please calibrate before saving')
-        
-        #Create a dataframe to save
-        df_dict = {'frame':self.frame, 'y_det':self.y_det, 'x_det':self.x_det, 'contrasts_det':self.contrasts_det, 'contrasts':self.contrasts, 'x_fit':self.x_fit, 'y_fit':self.y_fit, 'contrasts_se':self.contrasts_se, 'r2_fit':self.r2_fit, 'res_fit':self.res_fit,  'x':self.x, 'y':self.y, 'masses_kDa':self.masses_kDa, 'fitting_error':self.calibration_results['metrics']['scores_per_sample'], 'r2':self.r2, 'gradient_kDa_per_contrast':self.gradient_kDa_per_contrast, 'intercept_kDa_per_contrast':self.intercept_kDa_per_contrast}
+        if self.calibrated != 1:
+            raise ValueError("The event table has not been calibrated yet, please calibrate before saving")
+
+        # Create a dataframe to save
+        df_dict = {
+            "frame": self.frame,
+            "y_det": self.y_det,
+            "x_det": self.x_det,
+            "contrasts_det": self.contrasts_det,
+            "contrasts": self.contrasts,
+            "x_fit": self.x_fit,
+            "y_fit": self.y_fit,
+            "contrasts_se": self.contrasts_se,
+            "r2_fit": self.r2_fit,
+            "res_fit": self.res_fit,
+            "x": self.x,
+            "y": self.y,
+            "masses_kDa": self.masses_kDa,
+            "fitting_error": self.calibration_results["metrics"]["scores_per_sample"],
+            "r2": self.r2,
+            "gradient_kDa_per_contrast": self.gradient_kDa_per_contrast,
+            "intercept_kDa_per_contrast": self.intercept_kDa_per_contrast,
+        }
         df = pd.DataFrame(df_dict)
 
-        #Save to csv
+        # Save to csv
         df.to_csv(output_path, index=False)
-        print(f'Calibrated event table saved to {output_path}')
-    
+        print(f"Calibrated event table saved to {output_path}")
+
     def sace_to_parquet(self, output_path: str):
-        if self.calibrated !=1:
-            raise ValueError('The event table has not been calibrated yet, please calibrate before saving')
-        
-        #Create a dataframe to save
-        df_dict = {'frame':self.frame, 'y_det':self.y_det, 'x_det':self.x_det, 'contrasts_det':self.contrasts_det, 'contrasts':self.contrasts, 'x_fit':self.x_fit, 'y_fit':self.y_fit, 'contrasts_se':self.contrasts_se, 'r2_fit':self.r2_fit, 'res_fit':self.res_fit,  'x':self.x, 'y':self.y, 'masses_kDa':self.masses_kDa, 'fitting_error':self.calibration_results['metrics']['scores_per_sample'], 'r2':self.r2, 'gradient_kDa_per_contrast':self.gradient_kDa_per_contrast, 'intercept_kDa_per_contrast':self.intercept_kDa_per_contrast}
+        if self.calibrated != 1:
+            raise ValueError("The event table has not been calibrated yet, please calibrate before saving")
+
+        # Create a dataframe to save
+        df_dict = {
+            "frame": self.frame,
+            "y_det": self.y_det,
+            "x_det": self.x_det,
+            "contrasts_det": self.contrasts_det,
+            "contrasts": self.contrasts,
+            "x_fit": self.x_fit,
+            "y_fit": self.y_fit,
+            "contrasts_se": self.contrasts_se,
+            "r2_fit": self.r2_fit,
+            "res_fit": self.res_fit,
+            "x": self.x,
+            "y": self.y,
+            "masses_kDa": self.masses_kDa,
+            "fitting_error": self.calibration_results["metrics"]["scores_per_sample"],
+            "r2": self.r2,
+            "gradient_kDa_per_contrast": self.gradient_kDa_per_contrast,
+            "intercept_kDa_per_contrast": self.intercept_kDa_per_contrast,
+        }
         df = pd.DataFrame(df_dict)
 
-        #Save to parquet
+        # Save to parquet
         df.to_parquet(output_path, index=False)
-        print(f'Calibrated event table saved to {output_path}')
+        print(f"Calibrated event table saved to {output_path}")
 
-    def visualise(self, x_min: float=None, x_max: float=None, b:int=200):
-        if self.calibrated !=1:
-            raise ValueError('The event table has not been calibrated yet, please calibrate before visualising')
-        
-        plt.figure(figsize=(10,6))
-        plt.hist(self.masses_kDa, bins=b, density=True, alpha=0.6, color='g', label='Calibrated Mass Distribution')
+    def visualise(self, x_min: float = None, x_max: float = None, b: int = 200):
+        if self.calibrated != 1:
+            raise ValueError("The event table has not been calibrated yet, please calibrate before visualising")
+
+        plt.figure(figsize=(10, 6))
+        plt.hist(self.masses_kDa, bins=b, density=True, alpha=0.6, color="g", label="Calibrated Mass Distribution")
         if x_min is not None and x_max is not None:
             x_min = x_min
             x_max = x_max
         else:
-            x_min = min(self.masses_kDa)*1.1
-            x_max = max(self.masses_kDa)*1.1
+            x_min = min(self.masses_kDa) * 1.1
+            x_max = max(self.masses_kDa) * 1.1
         plt.xlim([x_min, x_max])
 
-        #Plot the fitted GMM peaks
+        # Plot the fitted GMM peaks
         from scipy.stats import norm
+
         x = np.linspace(x_min, x_max, 1000)
-        
 
         # Normalize/squeeze arrays to 1D
         means = np.ravel(self.calibrated_peaks)
         sigmas = np.ravel(self.calibrated_core_sigmas)
-        weights = np.ravel(self.calibration_results.get('weights', np.ones_like(means)))
+        weights = np.ravel(self.calibration_results.get("weights", np.ones_like(means)))
 
         # Sanity check: lengths must match
         if not (means.shape == sigmas.shape == weights.shape):
@@ -217,20 +285,12 @@ class Event_Table():
                 sigma = max(sigma, 1e-6)
 
             y_vals = weight * norm.pdf(x, loc=mean, scale=sigma)
-            plt.plot(x, y_vals, linewidth=2, label=f'GMM Peak at {mean:.2f} kDa')
-        plt.title('Calibrated Mass Distribution with Fitted GMM Peaks')
+            plt.plot(x, y_vals, linewidth=2, label=f"GMM Peak at {mean:.2f} kDa")
+        plt.title("Calibrated Mass Distribution with Fitted GMM Peaks")
         plt.legend()
-        plt.xlabel('Mass (kDa)')
-    
+        plt.xlabel("Mass (kDa)")
 
-
-
-
-
-    def _fit_gmm_with_stan(self,
-                        contrasts: np.ndarray,
-                        guesses: dict,
-                        debug_Bad_Data: bool = False):
+    def _fit_gmm_with_stan(self, contrasts: np.ndarray, guesses: dict, debug_Bad_Data: bool = False):
         """
         Fit a 1D 3-component Gaussian mixture to `contrasts` using Stan model
         gmm_1D_3p.stan, and return a results dict similar in spirit to fit_gmm.
@@ -257,13 +317,9 @@ class Event_Table():
         sigma_guess_contrast = np.asarray(guesses["sigmas_in_contrast"], dtype=float)
 
         if mu_guess_contrast.size != 3:
-            raise ValueError(
-                f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}"
-            )
+            raise ValueError(f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}")
         if sigma_guess_contrast.size != 3:
-            raise ValueError(
-                f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}"
-            )
+            raise ValueError(f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}")
         if np.any(sigma_guess_contrast <= 0):
             raise ValueError("'sigmas_in_contrast' must all be > 0.")
 
@@ -325,14 +381,13 @@ class Event_Table():
             iter_sampling=1500,
             adapt_delta=0.95,
             max_treedepth=11,
-            show_console=True
+            show_console=True,
         )
-    
 
         # --- 5. Extract posterior draws in standardised space ---
-        mu_draws_z = fit.stan_variable("mu")       # (draws, 3) in z-space
-        sigma_draws_z = fit.stan_variable("sigma") # (draws, 3) in z-space
-        theta_draws = fit.stan_variable("theta")   # (draws, 3)
+        mu_draws_z = fit.stan_variable("mu")  # (draws, 3) in z-space
+        sigma_draws_z = fit.stan_variable("sigma")  # (draws, 3) in z-space
+        theta_draws = fit.stan_variable("theta")  # (draws, 3)
 
         mu_hat_z = mu_draws_z.mean(axis=0)
         sigma_hat_z = sigma_draws_z.mean(axis=0)
@@ -386,166 +441,156 @@ class Event_Table():
 
         return results
 
+    def _fit_gmm_with_stan_1000(self, contrasts: np.ndarray, guesses: dict, debug_Bad_Data: bool = False):
+        """
+        Fit a 1D 3-component Gaussian mixture to `contrasts` using Stan model
+        gmm_1D_3p.stan, and return a results dict similar in spirit to fit_gmm.
 
+        Assumptions:
+        - guesses is a dict with keys:
+            'means_in_contrast': 3 mean guesses in the SAME units as `contrasts`
+            'sigmas_in_contrast': 3 sigma guesses in the SAME units as `contrasts`
+        - Stan model expects data:
+            int N;
+            vector[N] y;
+            vector[3] mu_guess_z;
+            vector[3] sigma_guess_z;
+        where here *_z are just 'scaled by 1000' versions of the contrast units,
+        not actual z-scores.
+        """
 
-    def _fit_gmm_with_stan_1000(self,
-                       contrasts: np.ndarray,
-                       guesses: dict,
-                       debug_Bad_Data: bool = False):
-            """
-            Fit a 1D 3-component Gaussian mixture to `contrasts` using Stan model
-            gmm_1D_3p.stan, and return a results dict similar in spirit to fit_gmm.
+        # --- 0. Check guesses structure ---
+        if "means_in_contrast" not in guesses:
+            raise ValueError("guesses must contain key 'means_in_contrast' with 3 values.")
+        if "sigmas_in_contrast" not in guesses:
+            raise ValueError("guesses must contain key 'sigmas_in_contrast' with 3 values.")
 
-            Assumptions:
-            - guesses is a dict with keys:
-                'means_in_contrast': 3 mean guesses in the SAME units as `contrasts`
-                'sigmas_in_contrast': 3 sigma guesses in the SAME units as `contrasts`
-            - Stan model expects data:
-                int N;
-                vector[N] y;
-                vector[3] mu_guess_z;
-                vector[3] sigma_guess_z;
-            where here *_z are just 'scaled by 1000' versions of the contrast units,
-            not actual z-scores.
-            """
+        mu_guess_contrast = np.asarray(guesses["means_in_contrast"], dtype=float)
+        sigma_guess_contrast = np.asarray(guesses["sigmas_in_contrast"], dtype=float)
 
-            # --- 0. Check guesses structure ---
-            if "means_in_contrast" not in guesses:
-                raise ValueError("guesses must contain key 'means_in_contrast' with 3 values.")
-            if "sigmas_in_contrast" not in guesses:
-                raise ValueError("guesses must contain key 'sigmas_in_contrast' with 3 values.")
+        if mu_guess_contrast.size != 3:
+            raise ValueError(f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}")
+        if sigma_guess_contrast.size != 3:
+            raise ValueError(f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}")
+        if np.any(sigma_guess_contrast <= 0):
+            raise ValueError("'sigmas_in_contrast' must all be > 0.")
 
-            mu_guess_contrast = np.asarray(guesses["means_in_contrast"], dtype=float)
-            sigma_guess_contrast = np.asarray(guesses["sigmas_in_contrast"], dtype=float)
+        # --- 1. Clean and inspect data ---
+        contrasts = np.asarray(contrasts, dtype=float)
+        finite_mask = np.isfinite(contrasts)
+        y = contrasts[finite_mask]
 
-            if mu_guess_contrast.size != 3:
-                raise ValueError(
-                    f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}"
-                )
-            if sigma_guess_contrast.size != 3:
-                raise ValueError(
-                    f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}"
-                )
-            if np.any(sigma_guess_contrast <= 0):
-                raise ValueError("'sigmas_in_contrast' must all be > 0.")
+        if debug_Bad_Data:
+            print(f"Total points: {contrasts.size}, finite: {y.size}")
+            print("Any NaN?", np.isnan(contrasts).any())
+            print("Any inf?", np.isinf(contrasts).any())
+            if y.size > 0:
+                print("Finite min, max:", np.nanmin(y), np.nanmax(y))
 
-            # --- 1. Clean and inspect data ---
-            contrasts = np.asarray(contrasts, dtype=float)
-            finite_mask = np.isfinite(contrasts)
-            y = contrasts[finite_mask]
+        if y.size == 0:
+            raise ValueError("No finite data points available for Stan GMM fit.")
 
-            if debug_Bad_Data:
-                print(f"Total points: {contrasts.size}, finite: {y.size}")
-                print("Any NaN?", np.isnan(contrasts).any())
-                print("Any inf?", np.isinf(contrasts).any())
-                if y.size > 0:
-                    print("Finite min, max:", np.nanmin(y), np.nanmax(y))
+        # --- 2. Simple scaling: y_scaled = y * scale_factor ---
+        scale_factor = 1000.0
 
-            if y.size == 0:
-                raise ValueError("No finite data points available for Stan GMM fit.")
+        y_scaled = y * scale_factor
+        N = y_scaled.shape[0]
 
-            # --- 2. Simple scaling: y_scaled = y * scale_factor ---
-            scale_factor = 1000.0
+        # transform guesses into the same scaled space
+        mu_guess_scaled = mu_guess_contrast * scale_factor
+        sigma_guess_scaled = sigma_guess_contrast * scale_factor
 
-            y_scaled = y * scale_factor
-            N = y_scaled.shape[0]
+        # keep ordering for Stan's ordered[3] mu if needed
+        mu_guess_scaled = np.sort(mu_guess_scaled)
 
-            # transform guesses into the same scaled space
-            mu_guess_scaled = mu_guess_contrast * scale_factor
-            sigma_guess_scaled = sigma_guess_contrast * scale_factor
+        # --- 3. Compile/load Stan model ---
+        gmm_model = cmdstanpy.CmdStanModel(stan_file="gmm_1D_3p_1000.stan")
 
-            # keep ordering for Stan's ordered[3] mu if needed
-            mu_guess_scaled = np.sort(mu_guess_scaled)
+        # Stan model should declare mu_guess_z and sigma_guess_z in data block
+        # (we're just reusing those names for the scaled versions)
+        stan_data = {
+            "N": int(N),
+            "y": y_scaled,
+            "mu_guess_z": mu_guess_scaled.astype(float),
+            "sigma_guess_z": sigma_guess_scaled.astype(float),
+        }
 
-            # --- 3. Compile/load Stan model ---
-            gmm_model = cmdstanpy.CmdStanModel(stan_file="gmm_1D_3p_1000.stan")
+        if debug_Bad_Data:
+            print("stan_data keys:", stan_data.keys())
+            print("mu_guess_scaled:", mu_guess_scaled)
+            print("sigma_guess_scaled:", sigma_guess_scaled)
 
-            # Stan model should declare mu_guess_z and sigma_guess_z in data block
-            # (we're just reusing those names for the scaled versions)
-            stan_data = {
-                "N": int(N),
-                "y": y_scaled,
-                "mu_guess_z": mu_guess_scaled.astype(float),
-                "sigma_guess_z": sigma_guess_scaled.astype(float),
-            }
+        # --- 4. Run Stan sampling (we can let Stan pick its own inits now) ---
+        fit = gmm_model.sample(
+            data=stan_data,
+            chains=4,
+            parallel_chains=4,
+            iter_warmup=5000,
+            iter_sampling=1500,
+            adapt_delta=0.95,
+            max_treedepth=11,
+            show_console=True,
+        )
 
-            if debug_Bad_Data:
-                print("stan_data keys:", stan_data.keys())
-                print("mu_guess_scaled:", mu_guess_scaled)
-                print("sigma_guess_scaled:", sigma_guess_scaled)
+        # --- 5. Extract posterior draws in scaled space ---
+        mu_draws_scaled = fit.stan_variable("mu")  # (draws, 3) in scaled space
+        sigma_draws_scaled = fit.stan_variable("sigma")  # (draws, 3) in scaled space
+        theta_draws = fit.stan_variable("theta")  # (draws, 3)
 
-            # --- 4. Run Stan sampling (we can let Stan pick its own inits now) ---
-            fit = gmm_model.sample(
-                data=stan_data,
-                chains=4,
-                parallel_chains=4,
-                iter_warmup=5000,
-                iter_sampling=1500,
-                adapt_delta=0.95,
-                max_treedepth=11,
-                show_console=True,
-            )
+        mu_hat_scaled = mu_draws_scaled.mean(axis=0)
+        sigma_hat_scaled = sigma_draws_scaled.mean(axis=0)
+        theta_hat = theta_draws.mean(axis=0)
 
-            # --- 5. Extract posterior draws in scaled space ---
-            mu_draws_scaled = fit.stan_variable("mu")       # (draws, 3) in scaled space
-            sigma_draws_scaled = fit.stan_variable("sigma") # (draws, 3) in scaled space
-            theta_draws = fit.stan_variable("theta")        # (draws, 3)
+        # --- 6. De-scale back to original contrast units ---
+        # scaled_y = y * scale_factor  =>  y = scaled_y / scale_factor
+        mu_hat = mu_hat_scaled / scale_factor
+        sigma_hat = sigma_hat_scaled / scale_factor
+        # theta_hat unchanged
 
-            mu_hat_scaled = mu_draws_scaled.mean(axis=0)
-            sigma_hat_scaled = sigma_draws_scaled.mean(axis=0)
-            theta_hat = theta_draws.mean(axis=0)
+        # --- 7. Fit quality metrics ---
+        summ = fit.summary()
+        if "R_hat" in summ.columns:
+            rhat_max = float(summ["R_hat"].max())
+        else:
+            rhat_max = float("nan")
 
-            # --- 6. De-scale back to original contrast units ---
-            # scaled_y = y * scale_factor  =>  y = scaled_y / scale_factor
-            mu_hat = mu_hat_scaled / scale_factor
-            sigma_hat = sigma_hat_scaled / scale_factor
-            # theta_hat unchanged
+        if "N_Eff" in summ.columns:
+            ess_min = float(summ["N_Eff"].min())
+        else:
+            ess_min = float("nan")
 
-            # --- 7. Fit quality metrics ---
-            summ = fit.summary()
-            if "R_hat" in summ.columns:
-                rhat_max = float(summ["R_hat"].max())
-            else:
-                rhat_max = float("nan")
+        # Mean log-likelihood per data point in original units
+        const = -0.5 * np.log(2.0 * np.pi)
+        log_lik = []
+        for val in y:  # finite points used in the fit (original scale)
+            log_norm = const - np.log(sigma_hat) - 0.5 * ((val - mu_hat) / sigma_hat) ** 2
+            log_mix = np.log(np.sum(theta_hat * np.exp(log_norm)))
+            log_lik.append(log_mix)
+        mean_log_lik = float(np.mean(log_lik))
 
-            if "N_Eff" in summ.columns:
-                ess_min = float(summ["N_Eff"].min())
-            else:
-                ess_min = float("nan")
+        metrics = {
+            "mean_log_lik": mean_log_lik,
+            "rhat_max": rhat_max,
+            "ess_min": ess_min,
+        }
 
-            # Mean log-likelihood per data point in original units
-            const = -0.5 * np.log(2.0 * np.pi)
-            log_lik = []
-            for val in y:  # finite points used in the fit (original scale)
-                log_norm = const - np.log(sigma_hat) - 0.5 * ((val - mu_hat) / sigma_hat) ** 2
-                log_mix = np.log(np.sum(theta_hat * np.exp(log_norm)))
-                log_lik.append(log_mix)
-            mean_log_lik = float(np.mean(log_lik))
+        results = {
+            "metrics": metrics,
+            "means_in_contrast": mu_hat.tolist(),
+            "sigmas_in_contrast": sigma_hat.tolist(),
+            "weights": theta_hat.tolist(),
+            "stan_fit": fit,
+            "standardisation": {
+                "scale_factor": float(scale_factor),
+                "finite_mask": finite_mask,
+            },
+        }
 
-            metrics = {
-                "mean_log_lik": mean_log_lik,
-                "rhat_max": rhat_max,
-                "ess_min": ess_min,
-            }
+        return results
 
-            results = {
-                "metrics": metrics,
-                "means_in_contrast": mu_hat.tolist(),
-                "sigmas_in_contrast": sigma_hat.tolist(),
-                "weights": theta_hat.tolist(),
-                "stan_fit": fit,
-                "standardisation": {
-                    "scale_factor": float(scale_factor),
-                    "finite_mask": finite_mask,
-                },
-            }
-
-            return results
-    
-    def _fit_gaussians_divide_and_conquer_simple(self,
-                                                contrasts: np.ndarray,
-                                                guesses: dict,
-                                                debug_Bad_Data: bool = False):
+    def _fit_gaussians_divide_and_conquer_simple(
+        self, contrasts: np.ndarray, guesses: dict, debug_Bad_Data: bool = False
+    ):
         """
         Divide-and-conquer Gaussian fitting using scipy.stats.norm.fit
         instead of Stan.
@@ -591,24 +636,16 @@ class Event_Table():
         split_points = np.asarray(guesses["split_points"], dtype=float)
 
         if mu_guess_contrast.size != 3:
-            raise ValueError(
-                f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}"
-            )
+            raise ValueError(f"'means_in_contrast' must have length 3, got {mu_guess_contrast.size}")
         if sigma_guess_contrast.size != 3:
-            raise ValueError(
-                f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}"
-            )
+            raise ValueError(f"'sigmas_in_contrast' must have length 3, got {sigma_guess_contrast.size}")
         if np.any(sigma_guess_contrast <= 0):
             raise ValueError("'sigmas_in_contrast' must all be > 0.")
 
         if split_points.size != 3:
-            raise ValueError(
-                f"'split_points' must have length 3, got {split_points.size}"
-            )
+            raise ValueError(f"'split_points' must have length 3, got {split_points.size}")
         if not (split_points[0] < split_points[1] < split_points[2]):
-            raise ValueError(
-                f"'split_points' must satisfy s1 < s2 < s3, got {split_points}"
-            )
+            raise ValueError(f"'split_points' must satisfy s1 < s2 < s3, got {split_points}")
 
         s1, s2, s3 = split_points
 
@@ -629,13 +666,13 @@ class Event_Table():
 
         # --- 2. Build region masks based on split_points ---
         # Region 0: peak 1
-        mask0 = (y < s1)
+        mask0 = y < s1
         # Region 1: peak 2
         mask1 = (y >= s1) & (y < s2)
         # Valley [s2, s3): ignored
         valley_mask = (y >= s2) & (y < s3)
         # Region 2: peak 3
-        mask2 = (y >= s3)
+        mask2 = y >= s3
 
         region_masks = [mask0, mask1, mask2]
         region_sizes = [int(m.sum()) for m in region_masks]
@@ -717,10 +754,10 @@ class Event_Table():
 
         results = {
             "metrics": metrics,
-            "means_in_contrast": mu_hats,      # list of 3 floats
+            "means_in_contrast": mu_hats,  # list of 3 floats
             "sigmas_in_contrast": sigma_hats,  # list of 3 floats
-            "weights": weights,                # list of 3 floats (fractions of used points)
-            "stan_fit": None,                  # kept for API compatibility
+            "weights": weights,  # list of 3 floats (fractions of used points)
+            "stan_fit": None,  # kept for API compatibility
             "standardisation": {
                 "finite_mask": finite_mask.tolist(),
                 "split_points": split_points.tolist(),
@@ -729,19 +766,13 @@ class Event_Table():
 
         return results
 
-
-
-
-
-
-    #new calibration
-    def calibrate_with_stan(self, select_by_metric: str,
-                  reject_great_residuals: bool = False,
-                  r2_PSF_fit: float = 0.9,
-                  debug_Bad_Data=False):
+    # new calibration
+    def calibrate_with_stan(
+        self, select_by_metric: str, reject_great_residuals: bool = False, r2_PSF_fit: float = 0.9, debug_Bad_Data=False
+    ):
         # Sanity check on metric choice, even though we no longer use AIC/BIC/score literally
-        if select_by_metric not in ('aic', 'bic', 'score'):
-            raise ValueError(f'The selected metric must be either aic, bic or score, not {select_by_metric}')
+        if select_by_metric not in ("aic", "bic", "score"):
+            raise ValueError(f"The selected metric must be either aic, bic or score, not {select_by_metric}")
 
         # Prep for possible future extension with different numbers of components
         metaparams = Event_Table.meta_calibration_parameters[self.instrument_name][self.ROI_mode]
@@ -755,21 +786,35 @@ class Event_Table():
         else:
             pass
 
-        #--------Clipping the data--------#
+        # --------Clipping the data--------#
         metaparams = Event_Table.meta_calibration_parameters[self.instrument_name][self.ROI_mode]
-        contrasts = contrasts[(contrasts > ((-30-np.array(metaparams)[1])/(np.array(metaparams)[0]))) & (contrasts < ((500-np.array(metaparams)[1])/(np.array(metaparams)[0])))] 
-        print(f'splits utilised {(np.array([110, 200, 280])+ np.array(metaparams)[1])*(np.array(metaparams)[0]).tolist()}')
+        contrasts = contrasts[
+            (contrasts > ((-30 - np.array(metaparams)[1]) / (np.array(metaparams)[0])))
+            & (contrasts < ((500 - np.array(metaparams)[1]) / (np.array(metaparams)[0])))
+        ]
+        print(
+            f"splits utilised {(np.array([110, 200, 280])+ np.array(metaparams)[1])*(np.array(metaparams)[0]).tolist()}"
+        )
 
-        #-------guesses
-        guesses = {'means_in_contrast':((np.array(Event_Table.MS1000_guesses['means']) - np.array(metaparams)[1])*(np.array(metaparams)[0])).tolist(),
-                    'sigmas_in_contrast':((np.array(Event_Table.MS1000_guesses['sigmas']))*(np.array(metaparams)[0])).tolist(),
-                    'split_points':  ((np.array([140, 220, 280])+ np.array(metaparams)[1])*(np.array(metaparams)[0])).tolist()}
-        
+        # -------guesses
+        guesses = {
+            "means_in_contrast": (
+                (np.array(Event_Table.MS1000_guesses["means"]) - np.array(metaparams)[1]) * (np.array(metaparams)[0])
+            ).tolist(),
+            "sigmas_in_contrast": (
+                (np.array(Event_Table.MS1000_guesses["sigmas"])) * (np.array(metaparams)[0])
+            ).tolist(),
+            "split_points": (
+                (np.array([140, 220, 280]) + np.array(metaparams)[1]) * (np.array(metaparams)[0])
+            ).tolist(),
+        }
 
-        print(f'One unit on z-axis is  {(np.std(1*np.std(contrasts))+np.mean(contrasts))/(np.array(metaparams)[0])+np.array(metaparams)[1]} kDa roughly')
+        print(
+            f"One unit on z-axis is  {(np.std(1*np.std(contrasts))+np.mean(contrasts))/(np.array(metaparams)[0])+np.array(metaparams)[1]} kDa roughly"
+        )
         results = self._fit_gmm_with_stan_1000(contrasts, guesses, debug_Bad_Data=debug_Bad_Data)
 
-        metric_val = results['metrics']['mean_log_lik']
+        metric_val = results["metrics"]["mean_log_lik"]
         print(
             f"Stan GMM fit completed. Mean log-likelihood per point = {metric_val:.3f}, "
             f"max R-hat = {results['metrics']['rhat_max']:.3f}, "
@@ -778,26 +823,18 @@ class Event_Table():
 
         # ----- Linear Regression (unchanged) -----
         model = LinearRegression()
-        contrast_means = np.array(results['means_in_contrast']).reshape(-1, 1)
-        model.fit(contrast_means, np.array(Event_Table.MS1000_guesses['means']))
+        contrast_means = np.array(results["means_in_contrast"]).reshape(-1, 1)
+        model.fit(contrast_means, np.array(Event_Table.MS1000_guesses["means"]))
 
         self.gradient_kDa_per_contrast = model.coef_[0]
         self.intercept_kDa_per_contrast = model.intercept_
-        self.r2 = model.score(
-            contrast_means,
-            np.array(Event_Table.MS1000_guesses['means'])
-        )
+        self.r2 = model.score(contrast_means, np.array(Event_Table.MS1000_guesses["means"]))
 
         self.calibrated_peaks = model.predict(contrast_means)
-        self.calibrated_core_sigmas = (
-            np.array(results['sigmas_in_contrast']) * self.gradient_kDa_per_contrast
-        )
+        self.calibrated_core_sigmas = np.array(results["sigmas_in_contrast"]) * self.gradient_kDa_per_contrast
 
         # Change the stored values of masses
-        self.masses_kDa = (
-            self.contrasts * self.gradient_kDa_per_contrast
-            + self.intercept_kDa_per_contrast
-        )
+        self.masses_kDa = self.contrasts * self.gradient_kDa_per_contrast + self.intercept_kDa_per_contrast
 
         # Store the results of the calibration to results
         self.calibration_results = results
@@ -806,26 +843,11 @@ class Event_Table():
         self.calibrated = 1
 
         print(
-            f'Your event table was successfully calibrated with an $R^{2}$ value of {self.r2:.4f} '
-            f'and calibration peak values of {self.calibrated_peaks} '
-            f'and corresponding sigmas of {self.calibrated_core_sigmas}'
+            f"Your event table was successfully calibrated with an $R^{2}$ value of {self.r2:.4f} "
+            f"and calibration peak values of {self.calibrated_peaks} "
+            f"and corresponding sigmas of {self.calibrated_core_sigmas}"
         )
         print(
-            f'Calibration gradient: {self.gradient_kDa_per_contrast} kDa per contrast unit, '
-            f'intercept: {self.intercept_kDa_per_contrast} kDa'
-        )   
-
-
-
-
-
-
-            
-
-    
-
-        
-
-
-
-
+            f"Calibration gradient: {self.gradient_kDa_per_contrast} kDa per contrast unit, "
+            f"intercept: {self.intercept_kDa_per_contrast} kDa"
+        )
