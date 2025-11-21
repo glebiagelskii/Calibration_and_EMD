@@ -31,6 +31,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         python -m pip install .[dev]
+        python -m pip install flake8 black
     - name: reformat with black
       run: |
         python -m black .

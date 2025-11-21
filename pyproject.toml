@@ -1,29 +1,34 @@
+TOML state:
 [build-system]
+
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Calibration and EMD"
+name = "your-project-name"
 version = "0.1.0"
-description = "EMD and general statistical analysis"
+description = "BCI / stats / Stan analysis project"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-  { name = "Gleb Iagelskii, email = "gleb.iagelskii@icloud.com" }
+  { name = "Your Name", email = "you@example.com" }
 ]
 
-dev = [
+dependencies = [
   "numpy",
   "scipy",
   "pandas",
   "matplotlib",
   "scikit-learn",
   "cmdstanpy",
+]
+
+[project.optional-dependencies]
+dev = [
   "pytest",
   "flake8",
   "black"
 ]
-
 
 [tool.setuptools.packages.find]
 where = ["src"]
