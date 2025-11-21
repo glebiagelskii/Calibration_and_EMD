@@ -1,11 +1,9 @@
-TOML state:
 [build-system]
-
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "your-project-name"
+name = "calibration-and-emd"
 version = "0.1.0"
 description = "BCI / stats / Stan analysis project"
 readme = "README.md"
@@ -26,8 +24,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest",
-  "flake8",
-  "black"
+  "flake8>=7.0.0",
+  "black",
 ]
 
 [tool.setuptools.packages.find]
